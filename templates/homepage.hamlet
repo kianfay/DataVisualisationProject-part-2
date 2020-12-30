@@ -1,2 +1,2 @@
-<h1> This is where we will put our pie charts
+<h1> This is a pie chart showing the proportions of the major programming languages in the first 20 repo of an organization
 <svg width="960" height="600"></svg>
