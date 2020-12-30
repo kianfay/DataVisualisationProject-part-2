@@ -11,3 +11,12 @@ li {
     width: 400px;
     height: 100px;
 }
+
+.arc text {
+  font: 14px sans-serif;
+  text-anchor: middle;
+}
+
+.arc path {
+  stroke: #fff;
+}

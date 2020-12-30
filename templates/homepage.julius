@@ -1,18 +1,27 @@
 // This template code taken from https://bl.ocks.org/Andrew-Reid/a73f9af9ccd9ef901a0c33c624096049
 
+// We select our svg html element to display the pie chart, where we also defined the height and width
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
     radius = Math.min(width, height) / 2,
     g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
+// We create an ordinal color collection of size n so that when index [n+r] is chosen, the color is of index [r] (circular motion)
 var color = d3.scaleOrdinal(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
 
-var data = [ {age:"<5", population: 2704659},{age:"5-13", population: 4499890},{age:"14-17", population: 2159981},{age:"18-24", population: 3853788},{age:"25-44", population: 14106543},{age:"45-64", population: 8819342},{age:"≥65", population: 612463} ]
+// Dummy data
+var data = [ 
+  {lang:"JavaScript",
+  bytes: 2704659}
+  ,
+  {lang:"Python",
+  bytes: 1200000}
+  ]
 
 var pie = d3.pie()
     .sort(null)
-    .value(function(d) { return d.population; });
+    .value(function(d) { return d.bytes; });
 
 var path = d3.arc()
     .outerRadius(radius - 10)
@@ -20,7 +29,7 @@ var path = d3.arc()
 
 var label = d3.arc()
     .outerRadius(radius - 40)
-    .innerRadius(radius - 40);
+    .innerRadius(radius - 70);
 
 var arc = g.selectAll(".arc")
     .data(pie(data))
@@ -29,7 +38,7 @@ var arc = g.selectAll(".arc")
 
 arc.append("path")
     .attr("d", path)
-    .attr("fill", function(d) { return color(d.data.age); })
+    .attr("fill", function(d,i) { return color(i); })
     .on("click",function(d) { 
       // The amount we need to rotate:
       var rotate = 180-(d.startAngle + d.endAngle)/2 / Math.PI * 180;
@@ -50,4 +59,4 @@ arc.append("path")
  var text = arc.append("text")
       .attr("transform", function(d) { return "translate(" + label.centroid(d) + ")"; })
       .attr("dy", "0.35em")
-      .text(function(d) { return d.data.age; });
+      .text(function(d) { return d.data.lang; });
