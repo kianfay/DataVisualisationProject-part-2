@@ -48,3 +48,6 @@ $else
     <div .container>
         <p .text-muted>
             #{appCopyright $ appSettings master}
+
+\<!-- D3 import -->
+    <script src="https://d3js.org/d3.v4.js">

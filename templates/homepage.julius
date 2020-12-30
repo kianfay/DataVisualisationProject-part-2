@@ -1,34 +1,53 @@
-document.getElementById(#{toJSON aDomId}).innerHTML = "This text was added by the Javascript part of the homepage widget.";
+// This template code taken from https://bl.ocks.org/Andrew-Reid/a73f9af9ccd9ef901a0c33c624096049
 
-$(function() {
-  $("##{rawJS commentFormId}").submit(function(event) {
-    event.preventDefault();
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height"),
+    radius = Math.min(width, height) / 2,
+    g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-    var message = $("##{rawJS commentTextareaId}").val();
-    // (Browsers that enforce the "required" attribute on the textarea won't see this alert)
-    if (!message) {
-      alert("Please fill out the comment form first.");
-      return;
-    }
+var color = d3.scaleOrdinal(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
 
-    // Make an AJAX request to the server to create a new comment
-    $.ajax({
-      url: '@{CommentR}',
-      type: 'POST',
-      contentType: "application/json",
-      data: JSON.stringify({
-        message: message,
-      }),
-      success: function (data) {
-        var newNode = $("<li></li>");
-        newNode.text(data.message);
-        console.log(data);
-        $("##{rawJS commentListId}").append(newNode);
-      },
-      error: function (data) {
-        console.log("Error creating comment: " + data);
-      },
+var data = [ {age:"<5", population: 2704659},{age:"5-13", population: 4499890},{age:"14-17", population: 2159981},{age:"18-24", population: 3853788},{age:"25-44", population: 14106543},{age:"45-64", population: 8819342},{age:"≥65", population: 612463} ]
+
+var pie = d3.pie()
+    .sort(null)
+    .value(function(d) { return d.population; });
+
+var path = d3.arc()
+    .outerRadius(radius - 10)
+    .innerRadius(0);
+
+var label = d3.arc()
+    .outerRadius(radius - 40)
+    .innerRadius(radius - 40);
+
+var arc = g.selectAll(".arc")
+    .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc");
+
+arc.append("path")
+    .attr("d", path)
+    .attr("fill", function(d) { return color(d.data.age); })
+    .on("click",function(d) { 
+      // The amount we need to rotate:
+      var rotate = 180-(d.startAngle + d.endAngle)/2 / Math.PI * 180;
+    
+      // Transition the pie chart
+      g.transition()
+        .attr("transform",  "translate(" + width / 2 + "," + height / 2 + ") rotate(" + rotate + ")")
+        .duration(1000);
+     
+     // Τransition the labels:
+     text.transition()
+       .attr("transform", function(dd) {
+         return "translate(" + label.centroid(dd) + ") rotate(" + (-rotate) + ")"; })
+       .duration(1000);
+
     });
 
-  });
-});
+ var text = arc.append("text")
+      .attr("transform", function(d) { return "translate(" + label.centroid(d) + ")"; })
+      .attr("dy", "0.35em")
+      .text(function(d) { return d.data.age; });
