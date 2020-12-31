@@ -3,12 +3,56 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module Handler.Home where
 
-import Import
+import Import hiding (newManager)
 import Yesod.Form.Bootstrap3 (BootstrapFormLayout (..), renderBootstrap3)
 import Text.Julius (RawJS (..))
 
+-- imports separate from template imports
+import Data.Aeson
+import Handler.GithubRepresent
+import Servant.Client
+import Network.HTTP.Client          (newManager)
+import Network.HTTP.Client.TLS      (tlsManagerSettings)
+
+---
+-- Definition for our LangR handler
+---
+
+getLangR :: Handler Value
+getLangR = do
+    x <- liftIO doGithubReq
+    case x of
+        Left _ -> error "parse error"
+        Right lang -> do 
+            print $ encode lang 
+            return $ toJSON lang  
+
+        ---- NOW AS WE CANT GET FURTHER, TRY CODE MENTORS
+
+
+-- A separate function which gets the data from the API endpoints
+queries :: ClientM Language
+queries = do getLangs (Just "Visualisation-App") "microsoft" "VSCode"
+    
+
+-- This function now essentially runs the Queries function and prints the output 
+doGithubReq ::  IO (Either ClientError Language)
+doGithubReq =   let env :: IO Servant.Client.ClientEnv
+                    env = do
+                                manager <- newManager tlsManagerSettings
+                                -- Here we define a ClientEnv smart using the smart constructor, mkClientEnv
+                                return $ Servant.Client.mkClientEnv manager (Servant.Client.BaseUrl {baseUrlScheme = Servant.Client.Http, baseUrlHost = "api.github.com", baseUrlPort = 80, baseUrlPath = ""})
+                        -- m >>= k suggests "feed the result of computation m to the function k" - from StackOverflow
+                        -- We could also put case after in, and we would not write case with a \.
+                in (Servant.Client.runClientM (queries) =<< env)
+
+-- TEMPLATE HANDLERS
 -- Define our data that will be used for creating the form.
 data FileForm = FileForm
     { fileInfo :: FileInfo

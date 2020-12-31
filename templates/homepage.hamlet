@@ -1,2 +1,2 @@
-<h1> This is a pie chart showing the proportions of the major programming languages in the first 20 repo of an organization
+<h1> Showing the distribution of languages for on organization (Microsoft in this case)
 <svg width="960" height="600"></svg>
