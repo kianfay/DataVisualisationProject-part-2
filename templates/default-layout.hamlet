@@ -50,4 +50,4 @@ $else
             #{appCopyright $ appSettings master}
 
 \<!-- D3 import -->
-    <script src="https://d3js.org/d3.v4.js">
+    <script src="https://d3js.org/d3.v3.js">
