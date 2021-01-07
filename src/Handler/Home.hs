@@ -26,31 +26,36 @@ import Network.HTTP.Client.TLS      (tlsManagerSettings)
 
 getLangR :: Handler Value
 getLangR = do
-    x <- liftIO doGithubReq
+    company <- lookupGetParam "company"
+    repo <- lookupGetParam "repo"
+    x <- liftIO $ doGithubReq company repo
     case x of
         Left _ -> error "parse error"
         Right lang -> do 
             print $ encode lang 
             return $ toJSON lang  
 
-        ---- NOW AS WE CANT GET FURTHER, TRY CODE MENTORS
-
 
 -- A separate function which gets the data from the API endpoints
-queries :: ClientM Language
-queries = do getLangs (Just "Visualisation-App") "microsoft" "VSCode"
+queries :: Maybe Text -> Maybe Text -> ClientM Language
+queries company repository = do 
+                        case company of 
+                            Nothing -> error "bad url parameter"
+                            Just comp -> case repository of 
+                                Nothing -> error "bad url parameter"
+                                Just repo -> getLangs (Just "Visualisation-App") comp repo
     
 
 -- This function now essentially runs the Queries function and prints the output 
-doGithubReq ::  IO (Either ClientError Language)
-doGithubReq =   let env :: IO Servant.Client.ClientEnv
-                    env = do
-                                manager <- newManager tlsManagerSettings
-                                -- Here we define a ClientEnv smart using the smart constructor, mkClientEnv
-                                return $ Servant.Client.mkClientEnv manager (Servant.Client.BaseUrl {baseUrlScheme = Servant.Client.Http, baseUrlHost = "api.github.com", baseUrlPort = 80, baseUrlPath = ""})
-                        -- m >>= k suggests "feed the result of computation m to the function k" - from StackOverflow
-                        -- We could also put case after in, and we would not write case with a \.
-                in (Servant.Client.runClientM (queries) =<< env)
+doGithubReq ::  Maybe Text -> Maybe Text -> IO (Either ClientError Language)
+doGithubReq company repo =   let    env :: IO Servant.Client.ClientEnv
+                                    env = do
+                                                manager <- newManager tlsManagerSettings
+                                                -- Here we define a ClientEnv smart using the smart constructor, mkClientEnv
+                                                return $ Servant.Client.mkClientEnv manager (Servant.Client.BaseUrl {baseUrlScheme = Servant.Client.Http, baseUrlHost = "api.github.com", baseUrlPort = 80, baseUrlPath = ""})
+                                        -- m >>= k suggests "feed the result of computation m to the function k" - from StackOverflow
+                                        -- We could also put case after in, and we would not write case with a \.
+                                in (Servant.Client.runClientM (queries company repo) =<< env)
 
 -- TEMPLATE HANDLERS
 -- Define our data that will be used for creating the form.

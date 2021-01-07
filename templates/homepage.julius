@@ -1,158 +1,71 @@
-// Template taken and modified from http://bl.ocks.org/dbuezas/9306799
 
-var svg = d3.select('svg')
-  .append('g')
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 90, left: 100},
+    width = 460 - margin.left - margin.right,
+    height = 450 - margin.top - margin.bottom;
 
-svg.append("g")
-	.attr("class", "slices");
-svg.append("g")
-	.attr("class", "labels");
-svg.append("g")
-	.attr("class", "lines");
+// append the svg object to the body of the page
+var svg = d3.select("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
 
-var width = 960,
-    height = 450,
-	radius = Math.min(width, height) / 2;
+// Parse the Data
+d3.json("/langdata/?company=microsoft&repo=vscode", function(data) {
 
-var pie = d3.layout.pie()
-	.sort(null)
-	.value(function(d) {
-		return d.value;
+	newdata = [];
+	Object.entries(data).forEach( x => {
+		[key, value] = x;
+		newdata.push( { label: key, value: value} );
 	});
+	
+	data = newdata;
+	data.sort( (a, b) => {
+		a.value - b.value;
+	})
 
-var arc = d3.svg.arc()
-	.outerRadius(radius * 0.8)
-	.innerRadius(radius * 0.4);
-
-var outerArc = d3.svg.arc()
-	.innerRadius(radius * 0.9)
-	.outerRadius(radius * 0.9);
-
-svg.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-
-var key = function(d){ return d.data.label; };
-
-var color = d3.scale.ordinal()
-	.domain(["Lorem ipsum", "dolor sit", "amet", "consectetur", "adipisicing", "elit", "sed", "do", "eiusmod", "tempor", "incididunt"])
-	.range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
-
-function randomData (){
-	var labels = color.domain();
-	return labels.map(function(label){
-		return { label: label, value: Math.random() }
-	});
-}
+	// X axis
+	var x = d3.scaleBand()
+	.range([ 0, width ])
+	.domain(data.map(function(d) { return d.label; }))
+	.padding(0.2);
+	svg.append("g")
+	.attr("transform", "translate(0," + height + ")")
+	.call(d3.axisBottom(x))
+	.selectAll("text")
+		.attr("transform", "translate(-10,0)rotate(-45)")
+		.style("text-anchor", "end");
 
 
-data = [
-  {
-    'label': 'JS',
-    'value': 100
-  },
-  {
-    'label': 'TS',
-    'value': 150
-  }
-]
+	maxY = Math.max(...data.map(x => x.value));
 
-d3.json("/langdata", function (error,data) {
-  newdata = [];
-  Object.entries(data).forEach( x => {
-	  [key, value] = x;
-	  newdata.push( { label: key, value: value} );
-  });
+	// Add Y axis
+	var y = d3.scaleLinear()
+	.domain([0, maxY])
+	.range([ height, 0]);
+	svg.append("g")
+	.call(d3.axisLeft(y));
 
-  change(newdata);
+	// Bars
+	svg.selectAll("mybar")
+	.data(data)
+	.enter()
+	.append("rect")
+		.attr("x", function(d) { return x(d.label); })
+		.attr("width", x.bandwidth())
+		.attr("fill", "#69b3a2")
+		// no bar at the beginning thus:
+		.attr("height", function(d) { return height - y(0); }) // always equal to 0
+		.attr("y", function(d) { return y(0); })
+
+	// Animation
+	svg.selectAll("rect")
+	.transition()
+	.duration(800)
+	.attr("y", function(d) { return y(d.value); })
+	.attr("height", function(d) { return height - y(d.value); })
+	.delay(function(d,i){console.log(i) ; return(i*100)})
+
 });
-
-
-function change(data) {
-
-	/* ------- PIE SLICES -------*/
-	var slice = svg.select(".slices").selectAll("path.slice")
-		.data(pie(data));
-
-	slice.enter()
-		.insert("path")
-		.style("fill", function(d) { return color(d.data.label); })
-		.attr("class", "slice");
-
-	slice		
-		.transition().duration(1000)
-		.attrTween("d", function(d) {
-			this._current = this._current || d;
-			var interpolate = d3.interpolate(this._current, d);
-			this._current = interpolate(0);
-			return function(t) {
-				return arc(interpolate(t));
-			};
-		})
-
-	slice.exit()
-		.remove();
-
-	/* ------- TEXT LABELS -------*/
-
-	var text = svg.select(".labels").selectAll("text")
-		.data(pie(data));
-
-	text.enter()
-		.append("text")
-		.attr("dy", ".35em")
-		.text(function(d) {
-			return d.data.label;
-		});
-	
-	function midAngle(d){
-		return d.startAngle + (d.endAngle - d.startAngle)/2;
-	}
-
-	text.transition().duration(1000)
-		.attrTween("transform", function(d) {
-			this._current = this._current || d;
-			var interpolate = d3.interpolate(this._current, d);
-			this._current = interpolate(0);
-			return function(t) {
-				var d2 = interpolate(t);
-				var pos = outerArc.centroid(d2);
-				pos[0] = radius * (midAngle(d2) < Math.PI ? 1 : -1);
-				return "translate("+ pos +")";
-			};
-		})
-		.styleTween("text-anchor", function(d){
-			this._current = this._current || d;
-			var interpolate = d3.interpolate(this._current, d);
-			this._current = interpolate(0);
-			return function(t) {
-				var d2 = interpolate(t);
-				return midAngle(d2) < Math.PI ? "start":"end";
-			};
-		});
-
-	text.exit()
-		.remove();
-
-	/* ------- SLICE TO TEXT POLYLINES -------*/
-
-	var polyline = svg.select(".lines").selectAll("polyline")
-		.data(pie(data));
-	
-	polyline.enter()
-		.append("polyline");
-
-	polyline.transition().duration(1000)
-		.attrTween("points", function(d){
-			this._current = this._current || d;
-			var interpolate = d3.interpolate(this._current, d);
-			this._current = interpolate(0);
-			return function(t) {
-				var d2 = interpolate(t);
-				var pos = outerArc.centroid(d2);
-				pos[0] = radius * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
-				return [arc.centroid(d2), outerArc.centroid(d2), pos];
-			};			
-		});
-	
-	polyline.exit()
-		.remove();
-};
