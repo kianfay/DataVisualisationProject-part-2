@@ -1,3 +1,2 @@
 <h1> Showing the distribution (in terms of bytes of code) of some of the most used languages, for a repo of an organization
-<svg id=svg1 ></svg>
-<svg id=svg2 ></svg>
+<div id=main ></div>

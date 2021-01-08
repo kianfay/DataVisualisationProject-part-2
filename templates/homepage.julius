@@ -4,27 +4,25 @@ var margin = {top: 10, right: 30, bottom: 90, left: 100},
     width = 460 - margin.left - margin.right,
     height = 450 - margin.top - margin.bottom;
 
-// append the svg object to the body of the page
-var svg1 = d3.select("#svg1")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform",
-          "translate(" + margin.left + "," + margin.top + ")");
+d3.select('#main').append('div')
+	.attr('id', 'svg1')
+		
+d3.select('#main').append('div')
+	.attr('id', 'svg2')
 
-var svg2 = d3.select("#svg2")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform",
-          "translate(" + margin.left + "," + margin.top + ")");
+addBarChart("#svg1" , {organization: "microsoft", repo: "vscode"});
 
-addBarChart(svg1, {organization: "microsoft", repo: "vscode"});
+addBarChart("#svg2", {organization: "adobe", repo: "adobe.github.com"});
 
-addBarChart(svg2, {organization: "adobe", repo: "adobe.github.com"});
-
-function addBarChart(selection, props){
+function addBarChart(name, props){
 	
+	svg = d3.select(name).append('svg')
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+  	
+	selection = svg.append("g")
+    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
 	// Parse the Data
 	d3.json("/langdata/?company=" + props.organization + "&repo=" + props.repo, function(data) {
 
