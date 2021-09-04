@@ -1,3 +1,6 @@
+# DataVisualisationProject
+A college project to visualise data from some REST API on a web app using Haskell.
+
 ## Haskell Setup
 
 1. If you haven't already, [install Stack](https://haskell-lang.org/get-started)
